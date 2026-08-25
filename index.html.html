@@ -318,7 +318,10 @@ function val(id) {
   return el ? el.value.trim() : "";
 }
 
-document.getElementById("enviar").addEventListener("click", () => {
+const WEBHOOK_URL = "COLE_AQUI_A_TEST_URL_DO_N8N";
+
+document.getElementById("enviar").addEventListener("click", async () => {
+
   const requiredIds = [
     "solicitante_nome",
     "solicitante_email",
@@ -336,34 +339,81 @@ document.getElementById("enviar").addEventListener("click", () => {
     return;
   }
 
-  const dataEntrega = val("data_entrega")
-    ? new Date(val("data_entrega") + "T12:00:00").toLocaleDateString("pt-BR")
-    : "";
+  const dados = {
+    solicitante_nome: val("solicitante_nome"),
+    solicitante_email: val("solicitante_email"),
+    solicitante_area: val("solicitante_area"),
+    objetivo_conteudo: val("objetivo_conteudo"),
+    publico: val("publico"),
+    data_entrega: val("data_entrega"),
+    consideracoes: val("consideracoes")
+  };
 
-  const resumo = [
-    "SOLICITAÇÃO DE COMUNICADOS INTERNOS",
-    "",
-    "DADOS DO SOLICITANTE",
-    `Nome: ${val("solicitante_nome")}`,
-    `E-mail: ${val("solicitante_email")}`,
-    `Área/escritório: ${val("solicitante_area")}`,
-    "",
-    "1. CONTEÚDO DO COMUNICADO",
-    val("objetivo_conteudo"),
-    "",
-    "2. PÚBLICO DO COMUNICADO",
-    val("publico"),
-    "",
-    "3. DATA DE ENTREGA",
-    dataEntrega,
-    "",
-    "4. CONSIDERAÇÕES FINAIS",
-    val("consideracoes") || "Não informado"
-  ].join("\n");
+  const botao = document.getElementById("enviar");
 
-  document.getElementById("resumo").textContent = resumo;
-  document.getElementById("resumo_card").classList.add("show");
-  document.getElementById("resumo_card").scrollIntoView({behavior:"smooth",block:"start"});
+  botao.disabled = true;
+  botao.textContent = "Enviando...";
+
+  try {
+
+    const resposta = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(dados)
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Erro no envio");
+    }
+
+    const dataEntrega = val("data_entrega")
+      ? new Date(val("data_entrega") + "T12:00:00").toLocaleDateString("pt-BR")
+      : "";
+
+    const resumo = [
+      "SOLICITAÇÃO DE COMUNICADOS INTERNOS",
+      "",
+      "DADOS DO SOLICITANTE",
+      `Nome: ${val("solicitante_nome")}`,
+      `E-mail: ${val("solicitante_email")}`,
+      `Área/escritório: ${val("solicitante_area")}`,
+      "",
+      "1. CONTEÚDO DO COMUNICADO",
+      val("objetivo_conteudo"),
+      "",
+      "2. PÚBLICO DO COMUNICADO",
+      val("publico"),
+      "",
+      "3. DATA DE ENTREGA",
+      dataEntrega,
+      "",
+      "4. CONSIDERAÇÕES FINAIS",
+      val("consideracoes") || "Não informado"
+    ].join("\n");
+
+    document.getElementById("resumo").textContent = resumo;
+    document.getElementById("resumo_card").classList.add("show");
+
+    botao.textContent = "Solicitação enviada";
+
+    alert("Solicitação enviada com sucesso!");
+
+    document.getElementById("resumo_card").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  } catch (erro) {
+
+    console.error(erro);
+
+    alert("Não foi possível enviar a solicitação. Tente novamente.");
+
+    botao.disabled = false;
+    botao.textContent = "Enviar";
+  }
 });
 </script>
 
