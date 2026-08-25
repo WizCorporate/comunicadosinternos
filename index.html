@@ -227,10 +227,6 @@ textarea.large{min-height:180px}
     </div>
   </div>
 
-  <div class="field">
-    <label for="solicitante_area">Área/escritório <span class="required">*</span></label>
-    <input type="text" id="solicitante_area" placeholder="Ex.: Marketing/São Paulo" required>
-  </div>
 </section>
 
 <section class="card">
@@ -301,13 +297,6 @@ textarea.large{min-height:180px}
   <button type="button" class="btn-primary" id="enviar">Enviar</button>
 </div>
 
-<section class="card summary-card" id="resumo_card">
-  <div class="sec-head">
-    <span class="sec-num">✓</span>
-    <h2 class="sec-title">Prévia da solicitação</h2>
-  </div>
-  <div class="summary-box" id="resumo"></div>
-</section>
 
 </main>
 
@@ -342,7 +331,6 @@ document.getElementById("enviar").addEventListener("click", async () => {
   const dados = {
     solicitante_nome: val("solicitante_nome"),
     solicitante_email: val("solicitante_email"),
-    solicitante_area: val("solicitante_area"),
     objetivo_conteudo: val("objetivo_conteudo"),
     publico: val("publico"),
     data_entrega: val("data_entrega"),
@@ -368,42 +356,9 @@ document.getElementById("enviar").addEventListener("click", async () => {
       throw new Error("Erro no envio");
     }
 
-    const dataEntrega = val("data_entrega")
-      ? new Date(val("data_entrega") + "T12:00:00").toLocaleDateString("pt-BR")
-      : "";
-
-    const resumo = [
-      "SOLICITAÇÃO DE COMUNICADOS INTERNOS",
-      "",
-      "DADOS DO SOLICITANTE",
-      `Nome: ${val("solicitante_nome")}`,
-      `E-mail: ${val("solicitante_email")}`,
-      `Área/escritório: ${val("solicitante_area")}`,
-      "",
-      "1. CONTEÚDO DO COMUNICADO",
-      val("objetivo_conteudo"),
-      "",
-      "2. PÚBLICO DO COMUNICADO",
-      val("publico"),
-      "",
-      "3. DATA DE ENTREGA",
-      dataEntrega,
-      "",
-      "4. CONSIDERAÇÕES FINAIS",
-      val("consideracoes") || "Não informado"
-    ].join("\n");
-
-    document.getElementById("resumo").textContent = resumo;
-    document.getElementById("resumo_card").classList.add("show");
-
     botao.textContent = "Solicitação enviada";
 
     alert("Solicitação enviada com sucesso!");
-
-    document.getElementById("resumo_card").scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
 
   } catch (erro) {
 
