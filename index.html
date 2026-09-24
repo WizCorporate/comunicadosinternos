@@ -188,6 +188,75 @@ textarea.large{min-height:180px}
   .banner-title{font-size:24px;padding:5px 12px 7px}
   .banner p{font-size:15px;margin-left:12px}
 }
+
+/* Modal de sucesso — teste local, sem envio ao webhook */
+.success-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(45,45,47,.34);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  z-index:9999;
+  backdrop-filter:blur(2px);
+}
+.success-modal-overlay.is-open{
+  display:flex;
+}
+.success-modal{
+  width:min(390px,100%);
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:30px 28px 26px;
+  text-align:center;
+  box-shadow:0 20px 55px rgba(45,45,47,.20);
+  border-top:4px solid var(--orange);
+  animation:successModalIn .22s ease-out;
+}
+.success-modal-icon{
+  width:48px;
+  height:48px;
+  margin:0 auto 16px;
+  border-radius:50%;
+  background:var(--orange);
+  color:var(--white);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:800;
+}
+.success-modal h2{
+  margin:0 0 8px;
+  color:var(--charcoal);
+  font-size:21px;
+  line-height:1.25;
+}
+.success-modal p{
+  margin:0 0 22px;
+  color:var(--gray-500);
+  font-size:14px;
+  line-height:1.55;
+}
+.success-modal button{
+  border:0;
+  border-radius:8px;
+  background:var(--orange);
+  color:var(--white);
+  font:inherit;
+  font-weight:700;
+  padding:11px 24px;
+  cursor:pointer;
+}
+.success-modal button:hover{
+  background:var(--orange-dark);
+}
+@keyframes successModalIn{
+  from{opacity:0;transform:translateY(8px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
 </style>
 </head>
 <body>
@@ -301,6 +370,16 @@ textarea.large{min-height:180px}
 </main>
 
 
+
+<div class="success-modal-overlay" id="successModal" role="dialog" aria-modal="true" aria-labelledby="successModalTitle">
+  <div class="success-modal">
+    <div class="success-modal-icon" aria-hidden="true">✓</div>
+    <h2 id="successModalTitle">Solicitação enviada!</h2>
+    <button type="button" id="fecharSuccessModal">Concluir</button>
+  </div>
+</div>
+
+
 <script>
 function val(id) {
   const el = document.getElementById(id);
@@ -308,6 +387,39 @@ function val(id) {
 }
 
 const WEBHOOK_URL = "https://mktcorporate.app.n8n.cloud/webhook/solicitacao-comunicado";
+
+function limparFormulario() {
+  [
+    "solicitante_nome",
+    "solicitante_email",
+    "objetivo_conteudo",
+    "publico",
+    "data_entrega",
+    "consideracoes"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+}
+
+function abrirModalSucesso() {
+  document.getElementById("successModal")?.classList.add("is-open");
+  document.getElementById("fecharSuccessModal")?.focus();
+}
+
+function fecharModalSucesso() {
+  document.getElementById("successModal")?.classList.remove("is-open");
+}
+
+document.getElementById("fecharSuccessModal")?.addEventListener("click", fecharModalSucesso);
+
+document.getElementById("successModal")?.addEventListener("click", (event) => {
+  if (event.target.id === "successModal") fecharModalSucesso();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") fecharModalSucesso();
+});
 
 document.getElementById("enviar").addEventListener("click", async () => {
 
@@ -342,7 +454,6 @@ document.getElementById("enviar").addEventListener("click", async () => {
   botao.textContent = "Enviando...";
 
   try {
-
     const resposta = await fetch(WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -355,9 +466,12 @@ document.getElementById("enviar").addEventListener("click", async () => {
       throw new Error("Erro no envio");
     }
 
-    botao.textContent = "Solicitação enviada";
+    limparFormulario();
 
-    alert("Solicitação enviada com sucesso!");
+    botao.disabled = false;
+    botao.textContent = "Enviar";
+
+    abrirModalSucesso();
 
   } catch (erro) {
 
