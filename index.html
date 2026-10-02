@@ -257,6 +257,55 @@ textarea.large{min-height:180px}
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 
+
+/* Arquivo de apoio */
+.attachment-choice{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.attachment-choice label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:96px;
+  padding:11px 14px;
+  border:1px solid var(--gray-300);
+  border-radius:8px;
+  background:var(--white);
+  cursor:pointer;
+  font-weight:700;
+}
+.attachment-choice input{
+  accent-color:var(--orange);
+}
+.attachment-upload{
+  display:none;
+  margin-top:18px;
+  padding:18px;
+  border:1px dashed var(--gray-300);
+  border-radius:10px;
+  background:var(--gray-50);
+}
+.attachment-upload.is-visible{
+  display:block;
+}
+.attachment-upload input[type="file"]{
+  width:100%;
+  padding:10px;
+  background:var(--white);
+  border:1px solid var(--gray-300);
+  border-radius:8px;
+  font:inherit;
+}
+.file-selected{
+  margin-top:9px;
+  color:var(--gray-500);
+  font-size:13px;
+  line-height:1.4;
+}
+
 </style>
 </head>
 <body>
@@ -362,6 +411,37 @@ textarea.large{min-height:180px}
   </div>
 </section>
 
+
+<section class="card">
+  <div class="sec-head">
+    <span class="sec-num">5</span>
+    <h2 class="sec-title">Arquivo de apoio</h2>
+  </div>
+
+  <div class="field">
+    <label>Deseja enviar algum arquivo de apoio para esta solicitação?</label>
+    <div class="hint">Caso tenha apresentações, imagens, documentos ou outros materiais que possam ajudar na criação do comunicado, você pode anexá-los à solicitação.</div>
+
+    <div class="attachment-choice" role="radiogroup" aria-label="Deseja enviar arquivo de apoio?">
+      <label>
+        <input type="radio" name="possui_anexo" value="sim">
+        Sim
+      </label>
+      <label>
+        <input type="radio" name="possui_anexo" value="nao" checked>
+        Não
+      </label>
+    </div>
+
+    <div class="attachment-upload" id="attachmentUpload">
+      <label for="arquivo_apoio">Anexe o arquivo de apoio</label>
+      <div class="hint">O arquivo será enviado junto à solicitação como material de apoio.</div>
+      <input type="file" id="arquivo_apoio" name="arquivo_apoio">
+      <div class="file-selected" id="fileSelected">Nenhum arquivo selecionado.</div>
+    </div>
+  </div>
+</section>
+
 <div class="submit-area">
   <button type="button" class="btn-primary" id="enviar">Enviar</button>
 </div>
@@ -400,6 +480,14 @@ function limparFormulario() {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
+
+  const nao = document.querySelector('input[name="possui_anexo"][value="nao"]');
+  if (nao) nao.checked = true;
+
+  const arquivo = document.getElementById("arquivo_apoio");
+  if (arquivo) arquivo.value = "";
+
+  atualizarCampoAnexo();
 }
 
 function abrirModalSucesso() {
@@ -410,6 +498,38 @@ function abrirModalSucesso() {
 function fecharModalSucesso() {
   document.getElementById("successModal")?.classList.remove("is-open");
 }
+
+
+function atualizarCampoAnexo() {
+  const escolha = document.querySelector('input[name="possui_anexo"]:checked')?.value || "nao";
+  const area = document.getElementById("attachmentUpload");
+  const arquivo = document.getElementById("arquivo_apoio");
+  const nome = document.getElementById("fileSelected");
+
+  if (escolha === "sim") {
+    area?.classList.add("is-visible");
+    if (arquivo) arquivo.required = true;
+  } else {
+    area?.classList.remove("is-visible");
+    if (arquivo) {
+      arquivo.required = false;
+      arquivo.value = "";
+    }
+    if (nome) nome.textContent = "Nenhum arquivo selecionado.";
+  }
+}
+
+document.querySelectorAll('input[name="possui_anexo"]').forEach(radio => {
+  radio.addEventListener("change", atualizarCampoAnexo);
+});
+
+document.getElementById("arquivo_apoio")?.addEventListener("change", (event) => {
+  const arquivo = event.target.files?.[0];
+  const nome = document.getElementById("fileSelected");
+  if (nome) nome.textContent = arquivo ? arquivo.name : "Nenhum arquivo selecionado.";
+});
+
+atualizarCampoAnexo();
 
 document.getElementById("fecharSuccessModal")?.addEventListener("click", fecharModalSucesso);
 
@@ -439,14 +559,27 @@ document.getElementById("enviar").addEventListener("click", async () => {
     return;
   }
 
-  const dados = {
-    solicitante_nome: val("solicitante_nome"),
-    solicitante_email: val("solicitante_email"),
-    objetivo_conteudo: val("objetivo_conteudo"),
-    publico: val("publico"),
-    data_entrega: val("data_entrega"),
-    consideracoes: val("consideracoes")
-  };
+  const possuiAnexo = document.querySelector('input[name="possui_anexo"]:checked')?.value || "nao";
+  const arquivoApoio = document.getElementById("arquivo_apoio")?.files?.[0];
+
+  if (possuiAnexo === "sim" && !arquivoApoio) {
+    alert("Selecione o arquivo de apoio antes de continuar.");
+    document.getElementById("arquivo_apoio")?.focus();
+    return;
+  }
+
+  const dados = new FormData();
+  dados.append("solicitante_nome", val("solicitante_nome"));
+  dados.append("solicitante_email", val("solicitante_email"));
+  dados.append("objetivo_conteudo", val("objetivo_conteudo"));
+  dados.append("publico", val("publico"));
+  dados.append("data_entrega", val("data_entrega"));
+  dados.append("consideracoes", val("consideracoes"));
+  dados.append("possui_anexo", possuiAnexo);
+
+  if (possuiAnexo === "sim" && arquivoApoio) {
+    dados.append("arquivo_apoio", arquivoApoio, arquivoApoio.name);
+  }
 
   const botao = document.getElementById("enviar");
 
@@ -456,10 +589,7 @@ document.getElementById("enviar").addEventListener("click", async () => {
   try {
     const resposta = await fetch(WEBHOOK_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(dados)
+      body: dados
     });
 
     if (!resposta.ok) {
